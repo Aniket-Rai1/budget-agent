@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Plaid Link</title>
+  <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+</head>
+<body>
+  <button id="connect-btn">Connect Bank Account</button>
+  <p id="status"></p>
+
+  <script>
+    const btn = document.getElementById("connect-btn");
+    const status = document.getElementById("status");
+
+    btn.addEventListener("click", async () => {
+      status.textContent = "";
+      btn.disabled = true;
+
+      try {
+        const tokenRes = await fetch("/create_link_token", { method: "POST" });
+        const tokenData = await tokenRes.json();
+        if (!tokenRes.ok) {
+          status.textContent = "Error: " + (tokenData.error || "Failed to create link token");
+          btn.disabled = false;
+          return;
+        }
+
+        const handler = Plaid.create({
+          token: tokenData.link_token,
+          onSuccess: async (public_token, metadata) => {
+            const institution = metadata.institution.name;
+            const exchangeRes = await fetch("/exchange_public_token", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ public_token, institution }),
+            });
+            const exchangeData = await exchangeRes.json();
+            if (!exchangeRes.ok) {
+              status.textContent = "Error: " + (exchangeData.error || "Failed to exchange token");
+            } else {
+              status.textContent = "Connected! Check your terminal for the access token and item ID.";
+            }
+            btn.disabled = false;
+          },
+          onExit: () => {
+            btn.disabled = false;
+          },
+        });
+        handler.open();
+      } catch (err) {
+        status.textContent = "Error: " + err.message;
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

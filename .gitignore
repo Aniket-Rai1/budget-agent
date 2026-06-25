@@ -1,0 +1,9 @@
+budget.db
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+plaid_link/connections_log.txt
+sync/deployment_package.zip
+sync/.build/

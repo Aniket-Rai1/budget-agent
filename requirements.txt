@@ -1,0 +1,5 @@
+pytest
+python-dotenv
+plaid-python
+flask
+psycopg[binary]
